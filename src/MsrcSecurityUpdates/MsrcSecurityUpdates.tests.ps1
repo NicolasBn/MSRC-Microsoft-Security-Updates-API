@@ -2,7 +2,8 @@
 # Import module would only work if the module is found in standard locations
 # Import-Module -Name MsrcSecurityUpdates -Force
 Import-Module .\MsrcSecurityUpdates.psd1 -Verbose -Force
-Set-MSRCApiKey -ApiKey "API KEY PLACEHOLDER" -Verbose
+
+# Set-MSRCApiKey -ApiKey "API KEY PLACEHOLDER" -Verbose
 
 if (-not ($global:MSRCApiKey)) {
 
@@ -76,7 +77,7 @@ Describe 'Function: Get-MsrcCvrfDocument (calls the MSRC /cvrf API)' {
 
     Get-MsrcSecurityUpdate | 
     Foreach-Object {
-        It "Get-MsrcCvrfDocument - none shall throw: $($PSItem.ID)" {
+        It 'Get-MsrcCvrfDocument - none shall throw: $($PSItem.ID)' {
             {
                 Get-MsrcCvrfDocument -ID $PSItem.ID | 
                 Out-Null
@@ -151,15 +152,44 @@ Describe 'Function: Get-MsrcVulnerabilityReportHtml (generates the MSRC Vulnerab
         Should Not Throw
     }
 
-    Get-MsrcSecurityUpdate | 
-    Foreach-Object {
-        It "Vulnerability Summary Report - none shall throw: $($PSItem.ID)" {
-            {
-                Get-MsrcCvrfDocument -ID $PSItem.ID |
-                Get-MsrcVulnerabilityReportHtml | 
-                Out-Null
-            } |
-            Should Not Throw
-        }
-    }
+    #Get-MsrcSecurityUpdate | 
+    #Foreach-Object {
+    #    It 'Vulnerability Summary Report - none shall throw: $($PSItem.ID)' {
+    #        {
+    #            Get-MsrcCvrfDocument -ID $PSItem.ID |
+    #            Get-MsrcVulnerabilityReportHtml | 
+    #            Out-Null
+    #        } |
+    #        Should Not Throw
+    #    }
+    #}
+}
+
+InModuleScope MsrcSecurityUpdates {
+	Describe 'Function: Get-KBDownloadUrl (generates the html for KBArticle downloads used in the vulnerability report affected software table)' {
+		It 'Get-KBDownloadUrl by pipeline' {
+			{
+				$doc = Get-MsrcCvrfDocument -ID 2017-May
+				$af = $doc | Get-MsrcCvrfAffectedSoftware 
+				$af.KBArticle | Get-KBDownloadUrl
+			} |
+			Should Not Throw
+		}
+
+
+		It 'Get-KBDownloadUrl by parameters' {
+			{
+				$doc = Get-MsrcCvrfDocument -ID 2017-May
+				$af = $doc | Get-MsrcCvrfAffectedSoftware 
+				Get-KBDownloadUrl -KBArticleObject $af.KBArticle
+			} |
+			Should Not Throw
+		}
+	}
+}
+
+#When a pester test fails, it writes out to stdout, and sets an error in $Error. When invoking powershell from C# it is a lot easier to read the stderr stream.
+if($Error)
+{
+    Write-Error 'A pester test has failed during the validation process'
 }

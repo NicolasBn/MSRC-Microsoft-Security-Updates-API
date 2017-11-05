@@ -49,14 +49,14 @@ Process {
                     Where-Object { $_.ProductID -eq $id} | 
                     Select-Object -ExpandProperty Value
                 ) ;
-                KBArticle = $(
-                    (
-                        $v.Remediations | 
-                        Where-Object { $_.ProductID -contains $id } |
-                        Where-Object { $_.Type -eq 2 }
-                    ).Description.Value
-                ) ;
-                CVE = $v.CVE
+                KBArticle = $v.Remediations | where-Object {$_.ProductID -contains $id} | Where-Object {$_.Type -eq 2} | ForEach-Object {
+                                [PSCustomObject]@{
+                                    ID = $_.Description.Value;
+                                    URL= $_.URL;
+                                    SubType = $_.SubType
+                                }
+                            };
+               CVE = $v.CVE
                 Severity = $(
                     (
                         $v.Threats | 
